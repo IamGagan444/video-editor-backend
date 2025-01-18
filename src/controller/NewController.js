@@ -61,10 +61,11 @@ const promptGenerator = AsyncHandler(async (req, res, next) => {
 async function expandPrompt(prompt) {
   const model = genAI.getGenerativeModel({ model: "gemini-pro" });
   const result = await model.generateContent(`
-    Expand the following prompt into a detailed one-minute script for a motivational video:
+    Expand the following prompt into a detailed thirty-second script for a motivational video:
     "${prompt}"
     The script should be engaging, inspirational, and suitable for visual representation.
   `);
+  return result.response.text();
 }
 
 async function authenticateWithPictory() {
