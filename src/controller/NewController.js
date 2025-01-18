@@ -68,6 +68,7 @@ async function expandPrompt(prompt) {
   return result.response.text();
 }
 
+// Function to authenticate with Pictory API (Unchanged)
 async function authenticateWithPictory() {
   try {
     const response = await axios.post(
@@ -82,7 +83,7 @@ async function authenticateWithPictory() {
         },
       }
     );
-    console.log("step-1 authentication creation:", response.data.access_token);
+    console.log("authentication creation::", response.data.access_token);
     if (response.data && response.data.access_token) {
       return response.data.access_token;
     } else {
@@ -97,20 +98,15 @@ async function authenticateWithPictory() {
   }
 }
 
+// Function to generate video using Pictory API (Unchanged)
 async function generateVideoWithPictory(accessToken, script) {
   try {
     const response = await axios.post(
       "https://api.pictory.ai/pictoryapis/v1/video/storyboard",
       {
-        videoName: "Sino-Japanese-War",
+        videoName: "Santa Claus",
         videoDescription: "Santa Claus is coming to town",
         language: "en",
-        webhook: "https://webhook.site/4f88f3a7-a10c-4bb3-a2d8-00efd6d76754",
-        brandLogo: {
-          url: "https://pictory.ai/wp-content/uploads/2022/03/logo-new-fon-2t.png",
-          verticalAlignment: "top",
-          horizontalAlignment: "right",
-        },
         audio: {
           autoBackgroundMusic: true,
           backGroundMusicVolume: 0.5,
@@ -122,15 +118,12 @@ async function generateVideoWithPictory(accessToken, script) {
         },
         scenes: [
           {
-            text: "script",
+            text: script,
             voiceOver: true,
             splitTextOnNewLine: false,
             splitTextOnPeriod: true,
           },
         ],
-        voiceOver: true,
-        splitTextOnNewLine: false,
-        splitTextOnPeriod: true,
       },
       {
         headers: {
@@ -141,7 +134,7 @@ async function generateVideoWithPictory(accessToken, script) {
       }
     );
 
-    console.log("Step 2: Generate Video Preview from Text:", response.data);
+    console.log("Pictory API Response:", response.data);
 
     if (response.data && response.data.data) {
       return response.data.jobId;
@@ -157,6 +150,7 @@ async function generateVideoWithPictory(accessToken, script) {
   }
 }
 
+// Function to poll for video completion (Unchanged)
 async function pollForVideoCompletion(jobId, accessToken) {
   const pollingInterval = 15000; // 15 seconds
   const maxRetries = 20; // Stop polling after 20 attempts
@@ -173,12 +167,12 @@ async function pollForVideoCompletion(jobId, accessToken) {
         }
       );
 
-      console.log("Step 3: GET Video Preview:", response.data);
+      console.log("Polling Response:", response.data);
 
       const status = response.data?.data?.status;
 
       if (status !== "in-progress") {
-        return response.data?.data;
+        return response.data?.data; // Return video data
       } else if (status === "in-progress") {
         console.log("Video generation is still in progress...");
       } else {
@@ -188,10 +182,37 @@ async function pollForVideoCompletion(jobId, accessToken) {
       console.error("Polling Error:", error.response?.data || error.message);
     }
 
-    await new Promise((resolve) => setTimeout(resolve, pollingInterval));
+    await new Promise(resolve => setTimeout(resolve, pollingInterval));
   }
 
   throw new ApiError(500, "Polling exceeded maximum retries.");
+}
+
+// Function to get the video download URL (New)
+async function getVideoDownloadURL(jobId, accessToken) {
+  try {
+    const response = await axios.get(
+      `https://api.pictory.ai/pictoryapis/v1/jobs/${jobId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "X-Pictory-User-Id": "PictoryCustomer",
+          responseType: 'stream' 
+        },
+      }
+    );
+
+    console.log("Get Video Download URL Response:", response.data);
+
+    if (response.data && response.data.data && response.data.data.renderParams.output) {
+      return response.data.data.renderParams.output.name;
+    } else {
+      throw new Error("Failed to retrieve video download URL.");
+    }
+  } catch (error) {
+    console.error("Get Video Download URL Error:", error.response?.data || error.message);
+    throw new ApiError(500, "Failed to retrieve video download URL.");
+  }
 }
 
 export { videoGeneratorAi, promptGenerator };
