@@ -39,15 +39,18 @@ const videoGeneratorAi = AsyncHandler(async (req, res, next) => {
 
     // Step 4: Poll for Video Completion
     const videoData = await pollForVideoCompletion(videoJobID, accessToken);
-    console.log("videourldata", videoData);
+    console.log("videourldata", videoData.renderParams);
 
+
+    
     if (videoData.status !== "in-progress") {
       // Step 5: Render Video
-      const renderJobId = await renderVideo(videoJobID, accessToken,videoData);
-      console.log("Render Job ID:", renderJobId);
+      const renderJobId = await renderVideo(videoJobID, accessToken,videoData.renderParams);
+      const renderPutJobId = await renderPutVideo(videoJobID, accessToken,videoData.renderParams);
+     
 
 
-      if (renderJobId) {
+      if (renderPutJobId) {
         // Step 7: Get Video Download URL
         const videoURL = await getVideoDownloadURL(renderJobId, accessToken);
         console.log("Final Video URL:", videoURL);
@@ -242,9 +245,39 @@ async function renderVideo(jobId, accessToken,videoData) {
   }
 }
 
+async function renderPutVideo(jobId, accessToken,videoData) {
+  try {
+    const response = await axios.put(
+      `https://api.pictory.ai/pictoryapis/v1/video/render/${jobId}`,
+      {
+        videoData
+      },
+    
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+          "X-Pictory-User-Id": "PictoryCustomer",
+        },
+      }
+    );
+
+    console.log("STEP-4, Render put Video Response:", response.data);
+
+    if (response.data && response.data.data.job_id) {
+      return response.data.data.job_id;
+    } else {
+      throw new Error("Failed to initiate video rendering.");
+    }
+  } catch (error) {
+    console.error("Render Video Error:", error.response?.data || error.message);
+    throw new ApiError(500, "Video rendering with Pictory API failed.");
+  }
+}
+
 async function getVideoDownloadURL(jobId, accessToken) {
-  const pollingInterval = 15000; // 15 seconds
-  const maxRetries = 20; // Maximum polling attempts
+  const pollingInterval = 10000; // 15 seconds
+  let maxRetries = 50; // Maximum polling attempts
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -252,9 +285,9 @@ async function getVideoDownloadURL(jobId, accessToken) {
         `https://api.pictory.ai/pictoryapis/v1/jobs/${jobId}`,
         {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
             "X-Pictory-User-Id": "PictoryCustomer",
+            
           },
         }
       );
@@ -270,6 +303,7 @@ async function getVideoDownloadURL(jobId, accessToken) {
       } else if (jobStatus === "failed" || jobStatus === "canceled") {
         throw new ApiError(500, `Video job failed with status: ${jobStatus}`);
       } else if (jobStatus === "in-progress") {
+        maxRetries+=1
         console.log("Video rendering is still in progress, polling again...");
       } else {
         throw new Error(`Unexpected job status: ${jobStatus}`);
