@@ -10,6 +10,10 @@ const clientSecret = process.env.PICTORY_API_SECREAT?.trim();
 
 const videoGeneratorAi = AsyncHandler(async (req, res, next) => {
   const { accessToken, expandedScript } = req.body;
+  console.log(accessToken,expandedScript)
+  if(!accessToken||!expandedScript){
+   return next(new ApiError(400,"accesstoken and expanded script is required !"))
+  }
 
   // Step 3: Generate Video
   const videoJobID = await generateVideoWithPictory(
@@ -61,7 +65,7 @@ const promptGenerator = AsyncHandler(async (req, res, next) => {
 async function expandPrompt(prompt) {
   const model = genAI.getGenerativeModel({ model: "gemini-pro" });
   const result = await model.generateContent(`
-    Expand the following prompt into a detailed one-minute script for a motivational video:
+    Expand the following prompt into a detailed ten-second script for a motivational video:
     "${prompt}"
     The script should be engaging, inspirational, and suitable for visual representation.
   `);
@@ -172,7 +176,7 @@ async function pollForVideoCompletion(jobId, accessToken) {
       const status = response.data?.data?.status;
 
       if (status !== "in-progress") {
-        return response.data?.data; // Return video data
+        return response.data; // Return video data
       } else if (status === "in-progress") {
         console.log("Video generation is still in progress...");
       } else {

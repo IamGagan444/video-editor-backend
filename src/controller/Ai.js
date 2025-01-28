@@ -144,7 +144,7 @@ async function generateVideoWithPictory(accessToken, script) {
         },
         scenes: [
             {
-                text: "script",
+                text: script,
                 voiceOver: true,
                 splitTextOnNewLine: false,
                 splitTextOnPeriod: true
@@ -158,7 +158,7 @@ async function generateVideoWithPictory(accessToken, script) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
-          "X-Pictory-User-Id": "PictoryCustomer",
+          "X-Pictory-User-Id": "Move37",
         },
       }
     );
@@ -190,7 +190,7 @@ async function pollForVideoCompletion(jobId, accessToken) {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "X-Pictory-User-Id": "PictoryCustomer",
+            "X-Pictory-User-Id": "Move37",
           },
         }
       );
@@ -227,7 +227,7 @@ async function renderVideo(jobId, accessToken,videoData) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
-          "X-Pictory-User-Id": "PictoryCustomer",
+          "X-Pictory-User-Id": "Move37",
         },
       }
     );
@@ -257,7 +257,7 @@ async function renderPutVideo(jobId, accessToken,videoData) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
-          "X-Pictory-User-Id": "PictoryCustomer",
+          "X-Pictory-User-Id": "Move37",
         },
       }
     );
@@ -286,7 +286,7 @@ async function getVideoDownloadURL(jobId, accessToken) {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "X-Pictory-User-Id": "PictoryCustomer",
+            "X-Pictory-User-Id": "Move37",
             
           },
         }
